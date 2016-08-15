@@ -15,13 +15,8 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // 空文字化を判定します。
-                if (string.IsNullOrWhiteSpace(this.OriginalFilePath))
-                    // 空文字を返します。
-                    return string.Empty;
-                else
-                    // ファイルの拡張子を返します。
-                    return Path.GetExtension(this.OriginalFilePath);
+                // ファイルパスが存在する場合は拡張子を返します。
+                return string.IsNullOrWhiteSpace(this.OriginalFilePath) ? string.Empty : Path.GetExtension(this.OriginalFilePath);
             }
         }
 
@@ -30,13 +25,8 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // 空文字化を判定します。
-                if (string.IsNullOrEmpty(this.FileExtension))
-                    // 空文字を返します。
-                    return string.Empty;
-                else
-                    // "."を抜いたファイルの拡張子を返します。
-                    return this.FileExtension.Replace(".", string.Empty);
+                // 拡張子が存在する場合はドットを除いて拡張子を返します。
+                return string.IsNullOrEmpty(this.FileExtension) ? string.Empty : this.FileExtension.Replace(".", string.Empty);
             }
         }
 
@@ -57,11 +47,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // アーティスト名を判定します。
-                if (string.IsNullOrWhiteSpace(this._artistName))
-                    return UNKNOWN_ARTIST_VALUE;
-                else
-                    return this._artistName;
+                return string.IsNullOrWhiteSpace(this._artistName) ? UNKNOWN_ARTIST_VALUE : this._artistName;
             }
             set
             {
@@ -77,11 +63,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // アルバム名を判定します。
-                if (string.IsNullOrWhiteSpace(this._albumName))
-                    return UNKNOWN_ALBUM_VALUE;
-                else
-                    return this._albumName;
+                return string.IsNullOrWhiteSpace(this._albumName) ? UNKNOWN_ALBUM_VALUE : this._albumName;
             }
             set
             {
@@ -97,7 +79,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                return new FileInfo(this.OriginalFilePath).Length;
+                return string.IsNullOrWhiteSpace(this.OriginalFilePath) ? 0 : new FileInfo(this.OriginalFilePath).Length;
             }
         }
     }
@@ -167,15 +149,7 @@ namespace Mp3Sort.Services
         public void WriteLogFileAttributes(LogFileAttributes fileAttributes, Behavior behavior)
         {
             // 転送方法用の文字列。
-            string behaviorStr;
-
-            // 転送方法を判定します。
-            if (behavior == Behavior.Move)
-                behaviorStr = "移動";
-            else if (behavior == Behavior.Copy)
-                behaviorStr = "コピー";
-            else
-                return;
+            var behaviorStr = (behavior == Behavior.Move) ? "移動" : "コピー";
 
             // ログを設定します。
             this._logBuilder.Append(INDENT);
@@ -230,8 +204,7 @@ namespace Mp3Sort.Services
             }
 
             // ログファイルを開くか判定します。
-            if (openLog)
-                Process.Start(logFilePath);
+            if (openLog) Process.Start(logFilePath);
         }
 
         /// <summary>
@@ -240,8 +213,7 @@ namespace Mp3Sort.Services
         public void Dispose()
         {
             // ビルダーを破棄します。
-            if (this._logBuilder != null)
-                this._logBuilder = null;
+            if (this._logBuilder != null) this._logBuilder = null;
         }
 
         // ヘッダ用のテンプレート。

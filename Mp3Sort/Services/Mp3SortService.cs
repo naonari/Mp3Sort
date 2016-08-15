@@ -113,13 +113,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // 空文字化を判定します。
-                if (string.IsNullOrWhiteSpace(this.OriginalFilePath))
-                    // 空文字を返します。
-                    return string.Empty;
-                else
-                    // ファイルの拡張子を返します。
-                    return Path.GetExtension(this.OriginalFilePath);
+                return string.IsNullOrWhiteSpace(this.OriginalFilePath) ? string.Empty : Path.GetExtension(this.OriginalFilePath);
             }
         }
 
@@ -128,13 +122,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // 空文字化を判定します。
-                if (string.IsNullOrEmpty(this.FileExtension))
-                    // 空文字を返します。
-                    return string.Empty;
-                else
-                    // "."を抜いたファイルの拡張子を返します。
-                    return this.FileExtension.Replace(".", string.Empty);
+                return string.IsNullOrEmpty(this.FileExtension) ? string.Empty : this.FileExtension.Replace(".", string.Empty);
             }
         }
 
@@ -155,11 +143,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // アーティスト名を判定します。
-                if (string.IsNullOrWhiteSpace(this._artistName))
-                    return UNKNOWN_ARTIST_VALUE;
-                else
-                    return this._artistName;
+                return string.IsNullOrWhiteSpace(this._artistName) ? UNKNOWN_ARTIST_VALUE : this._artistName;
             }
             set
             {
@@ -175,11 +159,7 @@ namespace Mp3Sort.Services
         {
             get
             {
-                // アルバム名を判定します。
-                if (string.IsNullOrWhiteSpace(this._albumName))
-                    return UNKNOWN_ALBUM_VALUE;
-                else
-                    return this._albumName;
+                return string.IsNullOrWhiteSpace(this._albumName) ? UNKNOWN_ALBUM_VALUE : this._albumName;
             }
             set
             {
@@ -335,22 +315,19 @@ namespace Mp3Sort.Services
             msr = this.SetFileAttributesList(this._container.Path, ref fileAttributesList);
 
             // リスト設定の結果値を判定します。
-            if (!msr.Result)
-                return msr;
+            if (!msr.Result) return msr;
 
             // 作業ディレクトリの作成を行います。
             msr = this.CreateDirectory(this._workDirectoryPath);
 
             // 作業ディレクトリの作成の結果値を判定します。
-            if (!msr.Result)
-                return msr;
+            if (!msr.Result) return msr;
 
             // 仕分けを行います。
             msr = this.SortCore(fileAttributesList);
 
             // 仕分けの結果値を判定します。
-            if (!msr.Result)
-                return msr;
+            if (!msr.Result) return msr;
 
             return new Mp3SortResult() { Result = true, Message = string.Empty };
         }
@@ -373,19 +350,12 @@ namespace Mp3Sort.Services
             var behaviorMsg = string.Empty;
 
             // 動作の判定を行います。
-            if (this._container.BehaviorValue == Behavior.Copy)
-                behaviorMsg = "コピー";
-            else if (this._container.BehaviorValue == Behavior.Move)
-                behaviorMsg = "移動";
+            behaviorMsg = this._container.BehaviorValue == Behavior.Copy ? "コピー" : "移動";
 
             // メッセージを作成します。
-            string msg;
-
-            // スキップ件数を判定します。
-            if (this._skipCount == 0)
-                msg = string.Format(Messages.N0001, this._transferCount, behaviorMsg);
-            else
-                msg = string.Format(Messages.N0002, this._transferCount, behaviorMsg, Environment.NewLine, this._skipCount);
+            var msg = this._skipCount == 0 ?
+                      string.Format(Messages.N0001, this._transferCount, behaviorMsg) :
+                      string.Format(Messages.N0002, this._transferCount, behaviorMsg, Environment.NewLine, this._skipCount);
 
             return new Mp3SortResult() { Result = true, Message = msg };
         }
@@ -515,8 +485,7 @@ namespace Mp3Sort.Services
                 msr = this.SetFileAttributesList(subDirectoryPath, ref list);
 
                 // リスト設定の結果値を判定します。
-                if (!msr.Result)
-                    return msr;
+                if (!msr.Result) return msr;
             }
 
             return new Mp3SortResult() { Result = true, Message = string.Empty };
@@ -587,6 +556,7 @@ namespace Mp3Sort.Services
                 // ソート結果をリストに格納します。
                 sortedList = query.ToList();
             }
+
             // ProgressBarを設定します。
             this._container.ProgressBehavior.SetTotalProcess(sortedList.Count());
 
@@ -620,8 +590,7 @@ namespace Mp3Sort.Services
                 msr = this.CreateDirectory(artistDirectoryPath);
 
                 // アーティストディレクトリ作成の結果値を判定します。
-                if (!msr.Result)
-                    return msr;
+                if (!msr.Result) return msr;
 
                 // パスの禁則文字を置換します。
                 var albumDirectoryName = this.ReplaceChar(fileAttributes.AlbumName, REPLACE_CHAR, Path.GetInvalidPathChars());
@@ -633,8 +602,7 @@ namespace Mp3Sort.Services
                 msr = this.CreateDirectory(albumDirectoryPath);
 
                 // アルバムディレクトリ作成の結果値を判定します。
-                if (!msr.Result)
-                    return msr;
+                if (!msr.Result) return msr;
 
                 // ファイル名を取得します。
                 var fileName = Path.GetFileName(fileAttributes.OriginalFilePath);
@@ -660,8 +628,7 @@ namespace Mp3Sort.Services
                 }
 
                 // ファイル転送の結果値を判定します。
-                if (!msr.Result)
-                    return msr;
+                if (!msr.Result) return msr;
             }
 
             return new Mp3SortResult() { Result = true, Message = string.Empty };
@@ -736,12 +703,9 @@ namespace Mp3Sort.Services
             var lowerExtension = Path.GetExtension(filePath).ToLower();
 
             // ファイルの拡張子を判定します。
-            if (this._container.Mp3 && MP3_LOWER_EXTENSION.Equals(lowerExtension))
-                return MP3_LOWER_EXTENSION;
-            if (this._container.Aac && AAC_LOWER_EXTENSION.Equals(lowerExtension))
-                return AAC_LOWER_EXTENSION;
-            if (this._container.Flac && FLAC_LOWER_EXTENSION.Equals(lowerExtension))
-                return FLAC_LOWER_EXTENSION;
+            if (this._container.Mp3 && MP3_LOWER_EXTENSION.Equals(lowerExtension)) return MP3_LOWER_EXTENSION;
+            if (this._container.Aac && AAC_LOWER_EXTENSION.Equals(lowerExtension)) return AAC_LOWER_EXTENSION;
+            if (this._container.Flac && FLAC_LOWER_EXTENSION.Equals(lowerExtension)) return FLAC_LOWER_EXTENSION;
 
             return null;
         }

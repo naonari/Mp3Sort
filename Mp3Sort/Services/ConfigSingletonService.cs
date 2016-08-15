@@ -67,8 +67,7 @@ namespace Mp3Sort.Services
         public string GetDefaultValue(string key)
         {
             // 設定ファイルのドキュメントのインスタンスを判定します。
-            if (this._xDoc == null)
-                return null;
+            if (this._xDoc == null) return null;
 
             try
             {
@@ -95,8 +94,7 @@ namespace Mp3Sort.Services
             var strResult = this.GetDefaultValue(key);
 
             // 値が取得出来ない場合は規定値を返します。
-            if (strResult == null)
-                return defaultValue;
+            if (strResult == null) return defaultValue;
 
             try
             {
@@ -123,8 +121,7 @@ namespace Mp3Sort.Services
         public bool GetCompleteInitialize(string key, bool defaultValue)
         {
             // 設定ファイルのドキュメントのインスタンスを判定します。
-            if (this._xDoc == null)
-                return defaultValue;
+            if (this._xDoc == null) return defaultValue;
 
             try
             {
@@ -156,8 +153,7 @@ namespace Mp3Sort.Services
         public bool GetSetFocus(string key, bool defaultValue)
         {
             // 設定ファイルのドキュメントのインスタンスを判定します。
-            if (this._xDoc == null)
-                return defaultValue;
+            if (this._xDoc == null) return defaultValue;
 
             try
             {

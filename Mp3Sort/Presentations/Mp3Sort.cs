@@ -206,10 +206,7 @@ namespace Mp3Sort.Presentations
             var container = new Mp3SortServiceContainer();
 
             // コンテナに値を設定します。
-            if (this.rbMove.Checked)
-                container.BehaviorValue = Behavior.Move;
-            else if (this.rbCopy.Checked)
-                container.BehaviorValue = Behavior.Copy;
+            container.BehaviorValue = this.rbMove.Checked ? Behavior.Move : Behavior.Copy;
 
             container.Mp3 = this.cbMp3.Checked;
             container.Aac = this.cbAac.Checked;
@@ -217,8 +214,7 @@ namespace Mp3Sort.Presentations
             container.CreateExtensionDirectory = this.cbCreateExtensionDirectory.Checked;
 
             container.Path = this.txtDirectory.Text;
-            if (this.cbConfirmOverWrite.Checked)
-                container.ConfirmOverWrite = this.ConfirmOverWriteFile;
+            if (this.cbConfirmOverWrite.Checked) container.ConfirmOverWrite = this.ConfirmOverWriteFile;
 
             container.ProgressBehavior = this;
             container.OutputLog = this.cbLog.Checked;
