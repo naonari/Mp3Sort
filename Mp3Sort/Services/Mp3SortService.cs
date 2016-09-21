@@ -26,14 +26,6 @@ namespace Mp3Sort.Services
     public class Mp3SortServiceContainer
     {
         /// <summary>
-        /// 上書き確認の処理を行います。
-        /// </summary>
-        /// <param name="fromFilePath">転送元のファイルパス。</param>
-        /// <param name="toFilePath">転送先のファイルパス。</param>
-        /// <returns>上書きをするかの判定値を返します。</returns>
-        public delegate bool ConfirmDelegate(string fromFilePath, string toFilePath);
-
-        /// <summary>
         /// MP3ファイルを対象とするかの判定値を設定・取得します。
         /// </summary>
         public bool Mp3 { get; set; }
@@ -76,7 +68,7 @@ namespace Mp3Sort.Services
         /// <summary>
         /// 上書き確認のデリゲードを設定・取得します。
         /// </summary>
-        public ConfirmDelegate ConfirmOverWrite { get; set; }
+        public Func<string, string, bool> ConfirmOverWrite { get; set; } = null;
     }
 
     /// <summary>
@@ -266,7 +258,7 @@ namespace Mp3Sort.Services
             {
                 // ディレクトリのロック用ファイルを作成します。
                 var lockFilePath = Path.Combine(this._container.Path, this._lockFileName);
-                _dummyFs = File.Create(lockFilePath);
+                this._dummyFs = File.Create(lockFilePath);
                 var fi = new FileInfo(lockFilePath);
                 fi.Attributes |= System.IO.FileAttributes.Hidden;
             }
@@ -305,6 +297,10 @@ namespace Mp3Sort.Services
         /// <returns>処理の結果値を返します。</returns>
         public Mp3SortResult Sort()
         {
+            // 件数の初期化を行います。
+            this._transferCount = 0;
+            this._skipCount = 0;
+
             // ファイル属性用のリストをインスタンス化します。
             var fileAttributesList = new List<FileAttributes>();
 
@@ -379,7 +375,7 @@ namespace Mp3Sort.Services
         /// </summary>
         private void SetLockFileName()
         {
-            Guid guid = Guid.NewGuid();
+            var guid = Guid.NewGuid();
 
             this._lockFileName = string.Format(LOCK_FILE_NAME_TMP, guid.ToString("N"));
         }
@@ -525,9 +521,9 @@ namespace Mp3Sort.Services
         /// <summary>
         /// ファイルの仕分けを行います。
         /// </summary>
-        /// <param name="list">属性が格納されているリスト。</param>
+        /// <param name="fileAttributesList">属性が格納されているリスト。</param>
         /// <returns>処理の結果値を返します。</returns>
-        private Mp3SortResult SortCore(List<FileAttributes> list)
+        private Mp3SortResult SortCore(List<FileAttributes> fileAttributesList)
         {
             // ログ出力をするかを判定します。
             if (this._container.OutputLog)
@@ -536,32 +532,25 @@ namespace Mp3Sort.Services
             // 結果値格納用変数。
             var msr = new Mp3SortResult();
 
-            // ソート結果格納用変数。
-            List<FileAttributes> sortedList;
+            // ソート用の属性リストクエリ。
+            var fileAttributesQuery = fileAttributesList.Select(x => x).OrderBy(x => true);
 
             // 拡張子別にディレクトリを作成するかを判定します。
             if (this._container.CreateExtensionDirectory)
-            { 
-                // 拡張子、アーティスト、アルバムにてソートします。
-                var query = from p in list orderby p.FileExtensionWithoutDot ascending, p.ArtistName ascending, p.AlbumName ascending select p;
+                // 拡張子にてソートします。
+                fileAttributesQuery = fileAttributesQuery.ThenBy(x => x.FileExtensionWithoutDot);
 
-                // ソート結果をリストに格納します。
-                sortedList = query.ToList();
-            }
-            else
-            { 
-                // アーティスト、アルバムにてソートします。
-                var query = from p in list orderby p.ArtistName ascending, p.AlbumName ascending select p;
+            // アーティス名、アルバム名にてソートします。
+            fileAttributesQuery = fileAttributesQuery.ThenBy(x => x.ArtistName).ThenBy(x => x.AlbumName);
 
-                // ソート結果をリストに格納します。
-                sortedList = query.ToList();
-            }
+            // ソートした値をリスト化します。
+            var fileAttributesSortedList = fileAttributesQuery.ToList();
 
             // ProgressBarを設定します。
-            this._container.ProgressBehavior.SetTotalProcess(sortedList.Count());
+            this._container.ProgressBehavior.SetTotalProcess(fileAttributesSortedList.Count());
 
             // ソートしたリストにて走査します。
-            foreach (var fileAttributes in sortedList)
+            foreach (var fileAttributes in fileAttributesSortedList)
             {
                 // 作成元ディレクトリのパスを取得します。
                 var workRootPath = Path.Combine(this._container.Path, WORK_DIRECTORY_NAME);
@@ -576,8 +565,7 @@ namespace Mp3Sort.Services
                     msr = this.CreateDirectory(workRootPath);
 
                     // 拡張子ディレクトリ作成の結果値を判定します。
-                    if (!msr.Result)
-                        return msr;
+                    if (!msr.Result) return msr;
                 }
 
                 // パスの禁則文字を置換します。
@@ -642,15 +630,15 @@ namespace Mp3Sort.Services
         /// <returns>処理の結果値を返します。</returns>
         private Mp3SortResult Transfer(string fromPath,string toPath)
         {
-            // 強制転送フラグ。
-            var forceTransfer = true;
+            // 上書きフラグ。
+            var forceOverWrite = true;
 
             // ファイルの重複確認を行います。
             if (File.Exists(toPath) && this._container.ConfirmOverWrite != null)
-                forceTransfer = this._container.ConfirmOverWrite(fromPath, toPath);
+                forceOverWrite = this._container.ConfirmOverWrite(fromPath, toPath);
 
             // ファイルの上書き判定を行います。
-            if (forceTransfer)
+            if (forceOverWrite)
                 // ファイルを削除します。
                 this.ForceDelete(toPath);
             else

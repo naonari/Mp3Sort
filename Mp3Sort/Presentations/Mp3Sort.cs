@@ -220,11 +220,10 @@ namespace Mp3Sort.Presentations
             container.OutputLog = this.cbLog.Checked;
 
             // サービスをインスタンス化します。
-            Mp3SortResult msr;
             using (var service = new Mp3SortService(container))
             {
                 // 値の検証を行います。
-                msr = service.Validate();
+                var msr = service.Validate();
 
                 //処理結果を判定します。
                 if (!msr.Result)
